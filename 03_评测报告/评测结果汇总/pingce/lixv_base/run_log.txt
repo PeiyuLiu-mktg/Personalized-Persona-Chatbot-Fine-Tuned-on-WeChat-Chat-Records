@@ -1,0 +1,38 @@
+============================================================
+Echo-Soul Evaluation Pipeline (GPU Version)
+============================================================
+Loading model to cuda...
+Model loaded successfully!
+Starting evaluation...
+Loading test data from /root/autodl-tmp/LlamaFactory/data/lixv_test_data.json...
+Loaded 291 test samples
+
+=== Sample 0 Debug ===
+Input: 那我先补补相关知识[凋谢]
+Generated: 哈哈[捂脸]
+行吧 你去补 补完了咱们再干
+别到时候被虐了hhh
+Ground Truth: 放心吧
+
+=== Sample 1 Debug ===
+Input: 这题真得一起写
+Generated: 哈哈，这题咱们一起想想，互相启发下，肯定能搞定！加油鸭～
+Ground Truth: 好像本来就是要有个别报错
+
+=== Sample 2 Debug ===
+Input: [晕]
+Generated: [晕] 没事没事，这种事咱们能应付过来的，别紧张别紧张。
+Ground Truth: 稳住军心 让他们赶紧把PPT做了 让冠翔上去讲了
+
+============================================================
+Results Summary
+============================================================
+sample_id                                  instruction  L1_BLEU4  L1_ROUGE1  L1_ROUGEL     L1_PPL  L2_Embedding_Cosine  L3_KHR  L3_Length_Sim  L3_Punctuation_Sim  L3_Modal_Sim  L4_Tone  L4_Semantic  L4_Fidelity  L4_Win_Rate  L5_Drift  L5_Adversarial_Drift  L5_Style_Consistency
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.014446        0.0        0.0 113.504456             0.823735    0.05       0.093750                 1.0           1.0      0.4          0.9          0.3          0.0  0.052178              0.787730              0.850565
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.000000        0.0        0.0  44.730320             0.506975    0.00       0.428571                 1.0           1.0      0.3          0.9          0.3          0.0  0.044664              0.623211              0.697851
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.016504        0.0        0.0  38.930080             0.496476    0.05       0.857143                 1.0           1.0      0.3          0.8          0.3          0.0  0.105010              0.695489              0.852573
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.012415        0.0        0.0  96.387589             0.108917    0.00       0.033333                 1.0           1.0      0.3          0.8          0.3          0.0  0.052211              0.485826              0.613862
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.000000        0.0        0.0  10.038160             0.444180    0.00       0.044444                 1.0           1.0      0.2          0.4          0.2          0.0  0.081905              0.695831              0.842427
+Results saved to /root/autodl-tmp/pingce_lixv_base
+
+Evaluation complete!
