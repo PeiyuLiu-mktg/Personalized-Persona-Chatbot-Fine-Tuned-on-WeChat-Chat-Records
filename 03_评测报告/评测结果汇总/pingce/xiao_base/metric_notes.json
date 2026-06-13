@@ -1,0 +1,5 @@
+{
+  "disabled_metrics": "BERTScore and emotion similarity are disabled because the available local checkpoints are not suitable for those tasks.",
+  "model_mode": "Running baseline with base model only (LoRA disabled)",
+  "persona_lexicon": "Loaded 40 persona keywords from train data"
+}
