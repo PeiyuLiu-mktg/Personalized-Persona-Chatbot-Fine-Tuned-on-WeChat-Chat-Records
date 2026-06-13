@@ -1,0 +1,7 @@
+{
+  "disabled_metrics": "BERTScore and emotion similarity are disabled because the available local checkpoints are not suitable for those tasks.",
+  "persona_lexicon": "Loaded 40 persona keywords from train data",
+  "judge_win_opponent": "base",
+  "model_mode": "Running fine-tuned LoRA model",
+  "metric_scope": "Running Level4 only; Levels 1/2/3/5 are skipped"
+}
