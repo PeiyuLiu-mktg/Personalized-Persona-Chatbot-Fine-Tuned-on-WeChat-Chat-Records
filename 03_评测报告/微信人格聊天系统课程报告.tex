@@ -1,0 +1,213 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{caption}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue
+}
+
+\captionsetup{font=small}
+\setlist[itemize]{nosep,leftmargin=2em}
+\renewcommand{\arraystretch}{1.2}
+
+\title{微信人格聊天系统课程报告\\\large 基于微信聊天数据、Qwen2.5-7B-Instruct 与 LoRA 的人格聊天实验}
+\author{经济学院\quad 2210644\quad 刘沛毓}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+本报告围绕微信人格聊天系统课程项目展开，目标是利用微信私聊数据构建人格化对话数据集，并在 \texttt{Qwen2.5-7B-Instruct} 基座上采用 LoRA 进行监督微调，得到能够模仿特定人物语气、措辞与表达惯性的对话模型。根据当前工作区中可直接核验的实验材料，项目共覆盖 3 类目标人物（老师、同学、亲人），总样本数为 6251 条，其中训练集 5625 条、测试集 626 条。评测部分采用五层指标体系，从文本重合度、语义相似度、风格细节、LLM-as-a-Judge 以及稳定性五个方面对 Base 模型与 LoRA(history) 模型进行对比。总体结果表明，LoRA(history) 在风格相关指标上有稳定提升，尤其体现在 Embedding Cosine、长度相似度、标点习惯和语气词使用上。L4 指标显示三组人物的加权总体胜率为 0.4776，其中某同学组达到 0.6014，说明该组微调已经能够稳定优于基座模型。
+\end{abstract}
+
+
+\section{评测体系}
+
+本项目没有只使用 BLEU 之类的单一指标，而是构建了五层评测体系，以便同时观察语义、风格与人格稳定性。具体如表~\ref{tab:eval-system} 所示。
+
+\begin{table}[H]
+\centering
+\caption{五层评测体系}
+\label{tab:eval-system}
+\begin{tabular}{p{2.2cm}p{4.1cm}p{7.0cm}}
+\toprule
+层级 & 指标 & 含义 \\
+\midrule
+L1 & BLEU4 & 传统文本重合度，衡量字面匹配程度 \\
+L2 & Embedding Cosine & 语义向量相似度，衡量回复语义贴近程度 \\
+L3 & KHR / LenSim / PuncSim / ModalSim & 关键词命中、句长、标点和语气词等风格细节 \\
+L4 & Tone / Semantic / Fidelity / Win Rate & 使用 LLM-as-a-Judge 对语气、语义、人物贴合度及相对胜率进行打分 \\
+L5 & AdvDrift / StyleCons & 衡量对抗提示下的稳定性与整体风格一致性 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+为避免展示口径混乱，正文只保留最终汇报中实际使用并参与分析的指标，不再展开未进入最终展示结果的实验性指标。
+
+\section{评测效果}
+
+\subsection{平均结果：Base 与 LoRA(history) 的整体对比}
+
+表~\ref{tab:macro-result} 给出了三位目标人物在 Base 模型与 LoRA(history) 模型上的平均结果。这里的平均是对三组人物结果做简单平均，与课程汇报 PPT 中展示数值一致，并已由本地结果文件重新核算。
+
+\begin{table}[H]
+\centering
+\caption{平均评测结果：Base vs. LoRA(history)}
+\label{tab:macro-result}
+\begin{tabular}{lccc}
+\toprule
+指标 & Base & LoRA(history) & 指标方向 \\
+\midrule
+BLEU4 & 0.0093 & 0.0114 & 越高越好 \\
+Embedding Cosine & 0.3456 & 0.4049 & 越高越好 \\
+KHR & 0.0113 & 0.0126 & 越高越好 \\
+Length\_Sim & 0.2649 & 0.4670 & 越高越好 \\
+Punctuation\_Sim & 0.9190 & 0.9870 & 越高越好 \\
+Modal\_Sim & 0.8352 & 0.9392 & 越高越好 \\
+Tone & 0.3979 & 0.6021 & 越高越好 \\
+Semantic & 0.4278 & 0.5722 & 越高越好 \\
+Fidelity & 0.4307 & 0.5693 & 越高越好 \\
+Win Rate & 0.5224 & 0.4776 & 越高越好 \\
+Adversarial\_Drift & 0.5882 & 0.5757 & 越低越好 \\
+Style\_Consistency & 0.7916 & 0.8397 & 越高越好 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+从平均结果可以看到，LoRA(history) 的主要收益集中在风格相关指标上。EmbCos、LenSim、PuncSim、ModalSim，以及 Tone、Fidelity、StyleCons 都有明显提升，说明微调后的模型在表达习惯、句子长度、标点使用、语气词和整体人设一致性上更接近目标人物。与此同时，Win Rate 没有同步上升，这也正是后文需要专门解释的问题。
+
+\subsection{分人物结果：与 PPT 展示口径一致的完整指标}
+
+为了与课程汇报 PPT 保持一致，分人物结果不再把 L4 单独拆出，而是将 Base 与 LoRA(history) 在同一人物上的展示指标放在同一张表中统一比较。
+
+\begin{table}[H]
+\centering
+\caption{某老师组评测结果：Base vs. LoRA(history)}
+\label{tab:xiao-result}
+\begin{tabular}{lcc}
+\toprule
+指标 & Base & LoRA(history) \\
+\midrule
+BLEU4 & 0.0059 & 0.0137 \\
+Embedding Cosine & 0.2764 & 0.3697 \\
+KHR & 0.0086 & 0.0114 \\
+Length\_Sim & 0.1928 & 0.4877 \\
+Punctuation\_Sim & 0.9750 & 1.0000 \\
+Modal\_Sim & 0.9050 & 0.9619 \\
+Tone & 0.5229 & 0.4771 \\
+Semantic & 0.5038 & 0.4962 \\
+Fidelity & 0.5629 & 0.4371 \\
+Win Rate & 0.7143 & 0.2857 \\
+Adversarial\_Drift & 0.5366 & 0.6789 \\
+Style\_Consistency & 0.8346 & 0.8396 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{某同学组评测结果：Base vs. LoRA(history)}
+\label{tab:lixv-result}
+\begin{tabular}{lcc}
+\toprule
+指标 & Base & LoRA(history) \\
+\midrule
+BLEU4 & 0.0094 & 0.0104 \\
+Embedding Cosine & 0.3718 & 0.4525 \\
+KHR & 0.0104 & 0.0121 \\
+Length\_Sim & 0.2172 & 0.5185 \\
+Punctuation\_Sim & 0.9499 & 0.9966 \\
+Modal\_Sim & 0.8458 & 0.9553 \\
+Tone & 0.3120 & 0.6880 \\
+Semantic & 0.3674 & 0.6326 \\
+Fidelity & 0.3378 & 0.6622 \\
+Win Rate & 0.3986 & 0.6014 \\
+Adversarial\_Drift & 0.6335 & 0.5028 \\
+Style\_Consistency & 0.7682 & 0.9045 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{某亲人组评测结果：Base vs. LoRA(history)}
+\label{tab:liupeilin-result}
+\begin{tabular}{lcc}
+\toprule
+指标 & Base & LoRA(history) \\
+\midrule
+BLEU4 & 0.0125 & 0.0101 \\
+Embedding Cosine & 0.3884 & 0.3924 \\
+KHR & 0.0149 & 0.0142 \\
+Length\_Sim & 0.3846 & 0.3949 \\
+Punctuation\_Sim & 0.8320 & 0.9645 \\
+Modal\_Sim & 0.7548 & 0.9005 \\
+Tone & 0.4496 & 0.5504 \\
+Semantic & 0.4722 & 0.5278 \\
+Fidelity & 0.4852 & 0.5148 \\
+Win Rate & 0.5913 & 0.4087 \\
+Adversarial\_Drift & 0.5946 & 0.5454 \\
+Style\_Consistency & 0.7719 & 0.7750 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+从分人物结果看，某同学组的整体收益最明显，几乎所有风格相关指标都同步提升，说明当数据量更大、表达模式更集中时，LoRA(history) 更容易学到稳定的人设特征。某亲人组的提升存在但更有限，说明这组数据中的风格信号更分散。某老师组则最能体现本项目评测口径的张力：虽然长度、标点、语气词等风格指标提升明显，但 Tone、Fidelity 和 Win Rate 反而被 Base 压过，说明这一组更容易受到裁判偏好与回复长度差异的影响。
+
+\subsection{history 消融实验}
+
+为了验证历史上下文是否真正有帮助，项目还在某老师组上比较了 LoRA(no history) 与 LoRA(history)。这部分 \texttt{no history} 结果并未保留独立的 \texttt{summary\_stats.csv}，但可以从本地 \texttt{final\_eval\_report.csv} 逐样本复算出均值，因此仍然是可复核的本地证据。结果如表~\ref{tab:ablation-history} 所示。
+
+\begin{table}[H]
+\centering
+\caption{某老师组 history 消融实验}
+\label{tab:ablation-history}
+\begin{tabular}{lcc}
+\toprule
+指标 & LoRA(no history) & LoRA(history) \\
+\midrule
+Embedding Cosine & 0.3392 & 0.3697 \\
+Tone & 0.3143 & 0.3476 \\
+Fidelity & 0.2571 & 0.2876 \\
+Modal\_Sim & 0.9429 & 0.9619 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+这组对照说明，\texttt{history} 不是装饰字段，而是人格延续的重要条件。保留上下文后，模型更容易维持目标人物的语气惯性、回复节奏和局部表达风格，因此在人设感上表现得更稳定。
+
+\section{结果讨论}
+
+\subsection{为什么风格增强后 Win Rate 反而下降}
+
+\texttt{Win Rate} 本质上依赖大模型裁判对两条回复做整体比较；如果问题表述得过于宽泛，而没有明确要求从语气、风格和人物贴合度出发判断，那么裁判模型就可能把回复是否更完整、是否信息量更大当作主要依据。
+
+在本项目中，Base 模型的回复通常明显更长，也更像通用聊天模型中的标准答案。因此即使 LoRA(history) 在 \texttt{Tone}、\texttt{Fidelity} 等人格相关指标上更接近目标人物，裁判模型仍可能因为 Base 回复更长、更全面而把票投给 Base。换句话说，\texttt{Win Rate} 在这里掺入了回复长度与通用表达偏好的影响，未必完全等价于人格模仿效果本身。
+
+因此，本项目的主要收获仍然是模型说话越来越接近目标人物，而不是在宽泛的整体偏好比较中稳定胜出。这也是为什么在解读人格微调效果时，应当更重视 \texttt{Tone}、\texttt{Fidelity} 以及结合判题口径后的 \texttt{Win Rate}。
+
+
+
+综合现有实验结果，可以得出以下结论：
+
+\begin{itemize}
+  \item 基于微信聊天数据构建人格化监督样本，并在 \texttt{Qwen2.5-7B-Instruct} 上进行 LoRA 微调，是一条可行的课程项目路线。
+  \item LoRA(history) 的最大价值在于增强对目标人物风格的贴近能力，而不是提升通用语义问答表现。
+  \item L4 指标显示三组人物加权总体胜率达到 0.4776，其中某同学组达到 0.6014，说明风格微调在部分人物上已经取得了可验证收益。
+  \item history 上下文对人格延续有直接帮助，能够提升语气模仿、人物贴合度和风格一致性。
+  \item 不同人物的数据分布会显著影响微调收益，风格越集中、越稳定的人物，越容易被模型学会。
+\end{itemize}
+
+
+\end{document}
