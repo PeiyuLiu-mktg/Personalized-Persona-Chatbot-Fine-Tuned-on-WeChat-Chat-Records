@@ -1,0 +1,37 @@
+============================================================
+Echo-Soul Evaluation Pipeline (GPU Version)
+============================================================
+Loading model to cuda...
+Loading LoRA weights from /root/autodl-tmp/LlamaFactory/saves/Qwen2.5-7B-Instruct/lora/train_2026-04-27-12-52-15...
+Model loaded successfully!
+Starting evaluation...
+Loading test data from /root/autodl-tmp/pingce/xiaolaoshi_test_data.json...
+Loaded 105 test samples
+
+=== Sample 0 Debug ===
+Input: 晚上的湖怎么拍都好看[坏笑]
+Generated: 拍到一半我才发现我包没带
+Ground Truth: 名家经典 是专业课吗 
+
+=== Sample 1 Debug ===
+Input: 我分组的[嘘]
+Generated: 是这样的 我是想问一下 你们宿舍是14号还是15号进校呢
+Ground Truth: 我突然想起这句话  觉得你吐槽一下也无所谓[偷笑][偷笑]
+
+=== Sample 2 Debug ===
+Input: 确实壮观😍
+Generated: 对啊  这种地方 没有照片可以代表的
+Ground Truth: 开始烟台天气预报报的是阴天  没想到在几万人的期盼中等来了日出
+
+============================================================
+Results Summary
+============================================================
+sample_id                                  instruction  L1_BLEU4  L1_ROUGE1  L1_ROUGEL     L1_PPL  L2_Embedding_Cosine  L3_KHR  L3_Length_Sim  L3_Punctuation_Sim  L3_Modal_Sim  L4_Tone  L4_Semantic  L4_Fidelity  L4_Win_Rate  L5_Drift  L5_Adversarial_Drift  L5_Style_Consistency
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.000000        0.0          0 126.360268             0.003511     0.0       0.833333                 1.0           1.0      0.3          0.4          0.3          0.0  0.121871              1.028183              0.706957
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.036545        0.0          0  19.589733             0.266272     0.0       0.965517                 1.0           1.0      0.2          0.3          0.2          0.0  0.089984              0.705624              0.702782
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.012290        0.0          0  61.895958             0.104166     0.0       0.580645                 1.0           1.0      0.5          0.6          0.4          0.0  0.119826              0.756910              0.902369
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.041961        0.0          0 101.213615             0.410397     0.0       0.900000                 1.0           1.0      0.3          0.6          0.3          0.0  0.120816              0.849263              0.933928
+  unknown 你是一个微信对话角色扮演模型，请严格模仿目标人物的语气、用词习惯和情绪表达方式进行回复。  0.000000        0.0          0  62.252094             0.127081     0.0       0.545455                 1.0           1.0      0.2          0.3          0.2          0.0  0.136590              0.725491              1.000000
+Results saved to /root/autodl-tmp/pingce_history_full
+
+Evaluation complete!
